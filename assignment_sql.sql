@@ -182,9 +182,30 @@ FROM tbBooks
 WHERE Num > (SELECT Num FROM tbBooks WHERE BookID ='LTT001');
  
 --4.	List the bookID and number of copy of this in Library (Number of copy in library = number of copy – number of copy student borrow but not return yet)--
-SELECT tbBooks.BookID, (tbBooks.Num-numofBorrow.countbook) AS NumofCopyInLibrary
-FROM tbBooks JOIN (SELECT COUNT(*) AS countbook,   
+
+SELECT Temp.BookID, MIN(Temp.Num) AS NumofCopyInLibrary
+FROM
+   (SELECT BookID,Num
+   FROM   tbBooks
+UNION 
+      SELECT tbBooks.BookID AS BookID, (Num-Num1) AS Num
+	  FROM tbBooks JOIN (SELECT BookID, COUNT(*) AS Num1 
+	                      FROM tbReceipts 
+						  WHERE [Return]=0 
+						  GROUP BY BookID) AS Temp2
+	  ON tbBooks.BookID = Temp2.BookID
+     ) AS Temp
+GROUP BY Temp.BookID;
+	    
 --5.	List all books which have number of borrow greater than number copy of this book in the library.--
+
+SELECT tbBooks.BookID,Name,Author,Publisher,Numofpage,Num,NumofBorrow
+FROM tbBooks LEFT JOIN 
+(SELECT BookID, COUNT(*) AS NumofBorrow
+FROM tbReceipts
+GROUP BY BookID) AS tbBorrowTemp
+ON tbBooks.BookID=tbBorrowTemp.BookID
+WHERE Num < NumofBorrow;  
 
 /*V-Others Queries */
 
@@ -223,4 +244,3 @@ INSERT
  
 
 
-)
