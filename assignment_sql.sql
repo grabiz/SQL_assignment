@@ -252,7 +252,10 @@ CREATE TABLE [Returns]
   DateReturn DATE NULL,
 );
 --2.	Get all record from Receipts which is not return yet to insert to Borrows table.--
-INSERT 
+INSERT INTO Borrows
+SELECT BookID,CardID,DateBorrow
+FROM tbReceipts
+WHERE [Return]=0;
 
 ------NOT FINISHED YET----------------------------------------------------------
 /*VI-View 
