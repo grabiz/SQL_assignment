@@ -196,6 +196,22 @@ UNION
 	  ON tbBooks.BookID = Temp2.BookID
      ) AS Temp
 GROUP BY Temp.BookID;
+----------------------------------------------------------------------------
+   SELECT BookID ,Num AS NumofCopyInLibrary
+   FROM   tbBooks
+   WHERE tbBooks.BookID NOT IN
+         (
+          SELECT BookID
+	  FROM   tbReceipts
+	  WHERE  [Return]=0
+	 )
+UNION 
+      SELECT tbBooks.BookID AS BookID, (Num-Num1) AS NumofCopyInLibrary
+      FROM tbBooks JOIN (SELECT BookID, COUNT(*) AS Num1 
+	                  FROM tbReceipts 
+			  WHERE [Return]=0 
+			  GROUP BY BookID) AS Temp2
+	  ON tbBooks.BookID = Temp2.BookID;
 	    
 --5.	List all books which have number of borrow greater than number copy of this book in the library.--
 
@@ -211,7 +227,7 @@ WHERE Num < NumofBorrow;
 
 --1.	Write a query to create 2 tables with name Borrows (CardID,BooKID, Dateborrow) and Returns (CardID,BooKID, Datereturn). They are based on Receipts table.--
 
-SELECT CardID,BookID,DateBorrow
+/*SELECT CardID,BookID,DateBorrow
 INTO Borrows
 FROM tbReceipts;
 
@@ -220,7 +236,21 @@ FROM Borrows;
 
 SELECT CardID,BookID,DateReturn
 INTO [Returns]
-FROM tbReceipts;
+FROM tbReceipts;*/
+
+CREATE TABLE Borrows
+(
+  CardID CHAR(8) NOT NULL REFERENCES tbStudents(CardID),
+  BookID CHAR(6) NOT NULL REFERENCES tbBooks(BookID),
+  DateBorrow DATE NOT NULL CHECK (DateBorrow < GETDATE()),
+);
+
+CREATE TABLE [Returns]
+(
+  CardID CHAR(8) NOT NULL REFERENCES tbStudents(CardID),
+  BookID CHAR(6) NOT NULL REFERENCES tbBooks(BookID),
+  DateReturn DATE NULL,
+);
 --2.	Get all record from Receipts which is not return yet to insert to Borrows table.--
 INSERT 
 
