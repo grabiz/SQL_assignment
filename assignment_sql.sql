@@ -123,36 +123,36 @@ INSERT INTO tbReceipts VALUES
 
 /* III- Simple Queries*/
 
---1.	List all information of books which is office Category (CategoryID of office books is “VPP”).--
+--1.List all information of books which is office Category (CategoryID of office books is “VPP”).--
 
 SELECT *
 FROM tbBooks
 WHERE CategoryID ='VPP';
 
---2.	List all receipts which are borrowed on August 2014. (CardID, BookID and borrowdate).--
+--2.List all receipts which are borrowed on August 2014. (CardID, BookID and borrowdate).--
 
 SELECT CardID,BookID,DateBorrow
 FROM tbReceipts
 WHERE DateBorrow BETWEEN '2014-08-01' AND '2014-08-30';
 
---3.	List all students who have name start by “N” and borrowed book.--
+--3.List all students who have name start by “N” and borrowed book.--
 
 SELECT *
 FROM tbStudents JOIN tbReceipts ON tbStudents.CardID=tbReceipts.CardID
 WHERE Name LIKE 'N%';
      
---4.	List all the students who borrowed book on July 2014 but not return yet.--
+--4.List all the students who borrowed book on July 2014 but not return yet.--
 
 SELECT *
 FROM tbStudents JOIN tbReceipts ON tbStudents.CardID=tbReceipts.CardID
 WHERE (DateBorrow BETWEEN '2014-07-01' AND '2014-07-31') AND [Return]=0;
 
---5.	List all information about book name, category name, publisher, author and number of copy of books in the library.--
+--5.List all information about book name, category name, publisher, author and number of copy of books in the library.--
 
 SELECT Name,CategoryName,Publisher,Author,Num
 FROM tbBooks JOIN tbCategories ON tbBooks.CategoryID=tbCategories.CategoryID;
 
---6.	List all receipts which is not return yet and sort the data ascending by borrow date.(Name of student, name of book, borrow date)--
+--6.List all receipts which is not return yet and sort the data ascending by borrow date.(Name of student, name of book, borrow date)--
 
 SELECT DateBorrow,tbBooks.Name,tbStudents.Name 
 FROM tbBooks JOIN tbReceipts ON tbBooks.BookID=tbReceipts.BookID
@@ -162,41 +162,28 @@ ORDER BY DateBorrow;
                
 /*IV-Complex Queries */
 
---1.	List total of books follow category. (CategotyID, Category name and total copy of each category in library).--
+--1.List total of books follow category. (CategotyID, Category name and total copy of each category in library).--
 
 SELECT tbBooks.CategoryID,CategoryName,SUM(tbBooks.Num) AS TotalCopyCategory
 FROM tbBooks JOIN tbCategories ON tbBooks.CategoryID=tbCategories.CategoryID
 GROUP BY tbBooks.CategoryID,CategoryName; 
 
---2.	List how many students borrow book on August 2014.--
+--2.List how many students borrow book on August 2014.--
 
 SELECT COUNT(*) AS NumofStudents
 FROM (SELECT Name FROM tbStudents JOIN tbReceipts ON tbStudents.CardID=tbReceipts.CardID
       WHERE DateBorrow BETWEEN '2014-08-01' AND '2014-08-31'
       GROUP BY Name) AS tbTemp;
 
---3.	List all books which there are number of copy more than number copy of book have BookID is “LTT001”.--
+--3.List all books which there are number of copy more than number copy of book have BookID is “LTT001”.--
 
 SELECT *
 FROM tbBooks
 WHERE Num > (SELECT Num FROM tbBooks WHERE BookID ='LTT001');
  
---4.	List the bookID and number of copy of this in Library (Number of copy in library = number of copy – number of copy student borrow but not return yet)--
+--4.List the bookID and number of copy of this in Library (Number of copy in library = number of copy – number of copy student borrow but not return yet)--
 
-SELECT Temp.BookID, MIN(Temp.Num) AS NumofCopyInLibrary
-FROM
-   (SELECT BookID,Num
-   FROM   tbBooks
-UNION 
-      SELECT tbBooks.BookID AS BookID, (Num-Num1) AS Num
-	  FROM tbBooks JOIN (SELECT BookID, COUNT(*) AS Num1 
-	                      FROM tbReceipts 
-						  WHERE [Return]=0 
-						  GROUP BY BookID) AS Temp2
-	  ON tbBooks.BookID = Temp2.BookID
-     ) AS Temp
-GROUP BY Temp.BookID;
-----------------------------------------------------------------------------
+
    SELECT BookID ,Num AS NumofCopyInLibrary
    FROM   tbBooks
    WHERE tbBooks.BookID NOT IN
@@ -213,7 +200,7 @@ UNION
 			  GROUP BY BookID) AS Temp2
 	  ON tbBooks.BookID = Temp2.BookID;
 	    
---5.	List all books which have number of borrow greater than number copy of this book in the library.--
+--5.List all books which have number of borrow greater than number copy of this book in the library.--
 
 SELECT tbBooks.BookID,Name,Author,Publisher,Numofpage,Num,NumofBorrow
 FROM tbBooks LEFT JOIN 
@@ -225,18 +212,7 @@ WHERE Num < NumofBorrow;
 
 /*V-Others Queries */
 
---1.	Write a query to create 2 tables with name Borrows (CardID,BooKID, Dateborrow) and Returns (CardID,BooKID, Datereturn). They are based on Receipts table.--
-
-/*SELECT CardID,BookID,DateBorrow
-INTO Borrows
-FROM tbReceipts;
-
-SELECT *
-FROM Borrows;
-
-SELECT CardID,BookID,DateReturn
-INTO [Returns]
-FROM tbReceipts;*/
+--1.Write a query to create 2 tables with name Borrows (CardID,BooKID, Dateborrow) and Returns (CardID,BooKID, Datereturn). They are based on Receipts table.--
 
 CREATE TABLE Borrows
 (
@@ -252,12 +228,13 @@ CREATE TABLE [Returns]
   DateReturn DATE NULL,
 );
 --2.	Get all record from Receipts which is not return yet to insert to Borrows table.--
+
 INSERT INTO Borrows
-SELECT BookID,CardID,DateBorrow
+SELECT CardID,BookID,DateBorrow
 FROM tbReceipts
 WHERE [Return]=0;
 
-------NOT FINISHED YET----------------------------------------------------------
+
 /*VI-View 
 1.	Create a view with a parameter which accept bookid and display number of copy of this book in the library.
 2.	Create a view with a parameter to accept a CardID of student and display list of not return book from this student. (Student name, Book name, Return date).
