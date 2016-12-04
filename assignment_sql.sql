@@ -227,24 +227,80 @@ CREATE TABLE [Returns]
   BookID CHAR(6) NOT NULL REFERENCES tbBooks(BookID),
   DateReturn DATE NULL,
 );
---2.	Get all record from Receipts which is not return yet to insert to Borrows table.--
+--2.Get all record from Receipts which is not return yet to insert to Borrows table.--
 
 INSERT INTO Borrows
 SELECT CardID,BookID,DateBorrow
 FROM tbReceipts
 WHERE [Return]=0;
+GO
+
+/*VI-View */ 
+--1.Create a view with a parameter which accept bookid and display number of copy of this book in the library.--
+CREATE VIEW vDisplayNumOfCopy
+AS
+ SELECT BookID ,Num AS NumofCopyInLibrary
+   FROM   tbBooks
+   WHERE tbBooks.BookID NOT IN
+         (
+          SELECT BookID
+	  FROM   tbReceipts
+	  WHERE  [Return]=0
+	 )
+UNION 
+      SELECT tbBooks.BookID AS BookID, (Num-Num1) AS NumofCopyInLibrary
+      FROM tbBooks JOIN (SELECT BookID, COUNT(*) AS Num1 
+	                  FROM tbReceipts 
+			  WHERE [Return]=0 
+			  GROUP BY BookID) AS Temp2
+	  ON tbBooks.BookID = Temp2.BookID;
+GO
+--2.Create a view with a parameter to accept a CardID of student and display list of not return book from this student. (Student name, Book name, Return date).--
+CREATE VIEW vDisplayListOfNotReturnBook
+AS
+SELECT tbStudents.CardID,tbBooks.Name AS BooksName,tbStudents.Name AS StudentsName, DateReturn
+FROM tbStudents JOIN tbReceipts
+     ON tbStudents.CardID=tbReceipts.CardID
+	 JOIN tbBooks
+	 ON tbReceipts.BookID=tbBooks.BookID
+WHERE DateReturn IS NULL;
+GO
+/*VII-Stored Procedure*/ 
+--1.Create a Stored Procedure to list all book are borrow in current date.--
+CREATE PROC spListAllBookBorrowedInCurrentDate
+AS
+  BEGIN   
+       SELECT tbBooks.Name
+       FROM tbBooks JOIN tbReceipts
+            ON tbBooks.BookID=tbReceipts.BookID
+       WHERE DateBorrow=GETDATE();
+  END;
+GO
 
 
-/*VI-View 
-1.	Create a view with a parameter which accept bookid and display number of copy of this book in the library.
-2.	Create a view with a parameter to accept a CardID of student and display list of not return book from this student. (Student name, Book name, Return date).
-*/
+--2.Create a Stored Procedure to accept bookID by parameter and display all students who borrow this book.--
+CREATE PROC spDisplayAllStudenntBorrowedBook
+            @bookID CHAR(6)
+AS
+  BEGIN
+     SELECT tbStudents.Name AS StudentName, tbStudents.Address,tbStudents.Tel
+	 FROM tbStudents JOIN tbReceipts
+	      ON tbStudents.CardID=tbReceipts.CardID
+		  JOIN tbBooks
+		  ON tbBooks.BookID=tbReceipts.BookID
+	WHERE tbBooks.BookID=@bookID
+  END;
+GO
 
-/*VII-Stored Procedure 
-1.	Create a Stored Procedure to list all book are borrow in current date.
-2.	Create a Stored Procedure to accept bookID by parameter and display all students who borrow this book.
-3.	Create a Stored Procedure to accept input [From date] and [To date] as parameters then displays number of books which are borrowed in this time.
-*/
+--3.Create a Stored Procedure to accept input [From date] and [To date] as parameters then displays number of books which are borrowed in this time.--
+CREATE PROC spNumOfBookBorrowedInPeriod
+            @Fromdate DATE, @Todate DATE
+AS
+  BEGIN
+     SELECT Count(*)
+	 FROM tbReceipts
+	 WHERE DateBorrow BETWEEN @Fromdate AND @Todate 
+  END;
 
 /* VIII-Trigger
 1.	Create a trigger to avoid user input same name on category name.
