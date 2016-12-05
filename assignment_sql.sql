@@ -301,11 +301,32 @@ AS
 	 FROM tbReceipts
 	 WHERE DateBorrow BETWEEN @Fromdate AND @Todate 
   END;
+GO
+/* VIII-Trigger*/
+--1. Create a trigger to avoid user input same name on category name.--
+CREATE TRIGGER trgAvoidInputSameCategoryName_INSERT_UPDATE
+ON tbCategories
+INSTEAD OF UPDATE,INSERT
+AS
+  IF (SELECT CategoryName FROM inserted) IN (SELECT CategoryName FROM tbCategories)
+  THROW 50001,'Can''t have same category name on category name column',1;
+ GO
+ 
+ --Test INSERT INTO tbCategories VALUES ('CDF',N'Cơ sở dữ liệu',N'Access, Oracle');--
 
-/* VIII-Trigger
-1.	Create a trigger to avoid user input same name on category name.
-2.	Disconnect the relationship between Students and Receipts and then create a trigger to automatic delete relation records on Receipts if user deletes a student on Students.
-*/
+--2.Disconnect the relationship between Students and Receipts and then create a trigger to automatic delete relation records on Receipts if user deletes a student on Students.--
+--Disconnect--
+ALTER TABLE tbReceipts 
+DROP FK__tbReceipt__CardI__2C3393D0;  
+GO
+--Then trigger--
+CREATE TRIGGER trgDeleteRecordOnReceiptsAfterDeleteStudent
+ON tbStudents
+AFTER DELETE
+AS
+ DELETE tbReceipts
+ WHERE CardID IN (SELECT CardID FROM deleted);
+GO
 
  
 
