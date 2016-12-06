@@ -319,6 +319,11 @@ AS
 ALTER TABLE tbReceipts 
 DROP FK__tbReceipt__CardI__2C3393D0;  
 GO
+/*Also DROP two tables Borrows and Returns are created on section V, because they have relationships with tbStudents
+Dong thoi phai xoa 2 bang Borrows va Returns tao ra o cau V, vi 2 bang nay co quan he voi bang Student khien cho lenh xoa 
+du lieu tren bang Student khong duoc thuc hien */
+DROP TABLE Borrows,[Returns];
+GO
 --Then trigger--
 CREATE TRIGGER trgDeleteRecordOnReceiptsAfterDeleteStudent
 ON tbStudents
@@ -328,6 +333,6 @@ AS
  WHERE CardID IN (SELECT CardID FROM deleted);
 GO
 
- 
+
 
 
